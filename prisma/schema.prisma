@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  fullname     String
+  email        String        @unique
+  password     String
+  photoProfile String?
+  role         Role
+  products     Product[]
+  transactions Transaction[]
+  cart         Cart[]
+}
+
+model Product {
+  id                  String               @id @default(uuid())
+  name                String
+  stock               Int
+  price               Int
+  description         String
+  imageProduct        String
+  userId              String
+  createdAt           DateTime             @default(now())
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productTransactions ProductTransaction[]
+  cart                Cart[]
+}
+
+model Transaction {
+  id                  String              @id @default(uuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productTransactions ProductTransaction?
+  name                String
+  email               String
+  phone               String
+  possCode            String
+  address             String
+  paymentProof        String
+  status              Status
+  total               Int
+  createdAt           DateTime            @default(now())
+  totalPrice          Int
+}
+
+model ProductTransaction {
+  productId     String
+  transactionId String      @unique
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, transactionId])
+}
+
+model Cart {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String  @unique
+  product    Product @relation(fields: [productId], references: [id])
+  total      Int     @default(0)
+  totalPrice Int     @default(0)
+}
+
+enum Role {
+  Seller
+  Buyer
+}
+
+enum Status {
+  wait
+  approve
+  reject
+}
